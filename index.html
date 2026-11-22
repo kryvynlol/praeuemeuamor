@@ -163,12 +163,57 @@
     #grid:before{inset:58px 0 78px 0;background-position:center;background-size:auto 70%;opacity:.10}
     #chat{background:#fff8f2;box-shadow:-8px 0 30px #6d4b3b33}
   }
+
+  /* Modo escuro: mantém a identidade rosa, alterando apenas as cores da interface */
+  html[data-theme="dark"]{color-scheme:dark;--bg:#211923;--panel:#302431;--panel2:#493348;--text:#f9eaf2;--muted:#c5a9b9;--accent:#ed86aa;--red:#dc718d;--green:#78b99b}
+  html[data-theme="dark"] body{background:var(--bg);color:var(--text)}
+  html[data-theme="dark"] #join{background:radial-gradient(circle at 12% 18%,#f08eae20 0 7%,transparent 22%),linear-gradient(135deg,#211923,#352432 55%,#422b3b)}
+  html[data-theme="dark"] .card{background:#342735f2;border-color:#694456;box-shadow:0 16px 45px #09050b80}
+  html[data-theme="dark"] .card h1,html[data-theme="dark"] header .room{color:#ffe0ec}
+  html[data-theme="dark"] .card p,html[data-theme="dark"] label.lbl,html[data-theme="dark"] .hint{color:#c9aaba}
+  html[data-theme="dark"] input[type=text],html[data-theme="dark"] input[type=password],html[data-theme="dark"] select{background:#241b28;color:#f9eaf2;border-color:#624458}
+  html[data-theme="dark"] input::placeholder{color:#b99aaa}
+  html[data-theme="dark"] .primary{background:linear-gradient(135deg,#ef91b1,#d96d98)}
+  html[data-theme="dark"] #err{color:#ff9ab4}
+  html[data-theme="dark"] header,html[data-theme="dark"] #controls{background:#302431;border-color:#55394d;box-shadow:0 2px 12px #09050b55}
+  html[data-theme="dark"] #shareBar{background:#592e45;border-color:#d8799a;color:#ffe0ec}
+  html[data-theme="dark"] .small{background:#50364d;color:#ffeaf2}
+  html[data-theme="dark"] .small:hover{background:#67445f}
+  html[data-theme="dark"] .small.red,html[data-theme="dark"] .btn2.red{background:#c85e7e;color:#fff}
+  html[data-theme="dark"] #grid{background:linear-gradient(90deg,#211923ed,#211923a8),url('gato-tema.png') right center/auto 100% no-repeat,#281f2b}
+  html[data-theme="dark"] #grid:before{opacity:.10;filter:brightness(.72) saturate(.9)}
+  html[data-theme="dark"] .tile{background:#332735;border-color:#67485d;box-shadow:0 8px 22px #08050b80}
+  html[data-theme="dark"] .tile .avatar{background:linear-gradient(145deg,#493348,#352535)}
+  html[data-theme="dark"] .tile .label{background:#241b28eF;color:#ffeaf2;border-color:#68465b}
+  html[data-theme="dark"] .tile .res,html[data-theme="dark"] .tile .tools{background:#211923dd}
+  html[data-theme="dark"] .ctl{background:#50364d;color:#ffeaf2;box-shadow:0 4px 12px #09050b70}
+  html[data-theme="dark"] .ctl:hover{background:#67445f}
+  html[data-theme="dark"] .ctl.off,html[data-theme="dark"] .ctl.leave{background:#c85e7e;color:#fff}
+  html[data-theme="dark"] .ctl.on{background:#4e987c;color:#fff}
+  html[data-theme="dark"] #chat{background:#302431;border-color:#55394d}
+  html[data-theme="dark"] #msgs{background:linear-gradient(180deg,#302431,#281f2b)}
+  html[data-theme="dark"] .msg b{color:#ff9fbd}
+  html[data-theme="dark"] .msg.sys{color:#c5a9b9}
+  html[data-theme="dark"] #chatForm{border-color:#55394d}
+  html[data-theme="dark"] dialog{background:#302431;color:#f9eaf2;border-color:#694456;box-shadow:0 18px 55px #08050b}
+  html[data-theme="dark"] dialog::backdrop{background:#100b14bb}
+  html[data-theme="dark"] .opt:hover{background:#493348}
+  html[data-theme="dark"] .opt input{accent-color:#ed86aa}
+  html[data-theme="dark"] .btn2{background:#50364d;color:#ffeaf2}
+  html[data-theme="dark"] .btn2.pri{background:#dc789c;color:#fff}
+  html[data-theme="dark"] #toast{background:#211923f2;color:#ffeaf2;border-color:#79536b}
+  .theme-toggle{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid #e7b9c2;border-radius:999px;padding:9px 13px;background:#fff8f2;color:#704b40;font-size:13px;font-weight:700;box-shadow:0 4px 14px #68473822;cursor:pointer;white-space:nowrap}
+  .theme-toggle:hover{filter:brightness(.97)}
+  #join .theme-toggle{width:100%;margin:0 0 16px}
+  header .theme-toggle{margin-left:4px}
+  html[data-theme="dark"] .theme-toggle{background:#50364d;color:#ffeaf2;border-color:#9c607d;box-shadow:0 4px 14px #09050b88}
+  @media(max-width:760px){.theme-toggle{padding:8px 10px;font-size:12px}header{flex-wrap:wrap}header .room{max-width:35%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 </style>
 </head>
 <body>
-
 <div id="join">
   <form class="card" id="joinForm">
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Ativar modo escuro">🌙 Ativar modo escuro</button>
     <h1>Mini Discord</h1>
     <p>Entre na sala pra conversar por voz, vídeo e tela.</p>
     <label class="lbl" for="name">Seu nome</label>
@@ -189,6 +234,7 @@
     <header>
       <span class="room" id="roomTitle"></span>
       <span class="sp"></span>
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Ativar modo escuro">🌙 Modo escuro</button>
       <div id="shareBar" class="hidden"><span>🔴 Você está compartilhando a tela</span><button class="small red" id="btnStopBar">Parar</button></div>
       <button class="small" id="btnInvite">🔗 Convite</button>
       <button class="small" id="btnChat">💬 Chat</button>
@@ -775,6 +821,31 @@ async function join(ev) {
   } catch { toast('Sem acesso ao microfone — você entrou só ouvindo. Clique em 🎤 para tentar de novo.', 6000); }
   updateButtons(); connect();
 }
+
+(function setupTheme(){
+  const root = document.documentElement;
+  const toggles = [...document.querySelectorAll('[data-theme-toggle]')];
+  let saved = 'light';
+  try { saved = localStorage.getItem('md_theme') || 'light'; } catch {}
+  const apply = (mode) => {
+    root.dataset.theme = mode;
+    const dark = mode === 'dark';
+    toggles.forEach((toggle) => {
+      toggle.textContent = dark ? '☀️ Ativar modo claro' : '🌙 Ativar modo escuro';
+      toggle.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+      toggle.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      toggle.title = dark ? 'Mudar para o tema claro' : 'Mudar para o tema escuro';
+    });
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = dark ? '#302431' : '#f3cbd0';
+  };
+  apply(saved === 'dark' ? 'dark' : 'light');
+  toggles.forEach((toggle) => toggle.addEventListener('click', () => {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('md_theme', next); } catch {}
+    apply(next);
+  }));
+})();
 
 (async function init() {
   try { const c = await (await fetch('/config')).json(); ICE = c.iceServers; if (c.needsPassword) $('#pwWrap').classList.remove('hidden'); } catch {}

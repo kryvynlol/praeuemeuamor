@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mini Discord</title>
 <link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#5865f2">
+<meta name="theme-color" content="#f3cbd0">
 <link rel="icon" type="image/png" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <style>
@@ -111,6 +111,58 @@
 
   #toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#000d;padding:10px 16px;border-radius:8px;font-size:14px;z-index:50;opacity:0;pointer-events:none;transition:.2s;max-width:90%;text-align:center}
   #toast.show{opacity:1}
+
+  /* Tema visual fofo do gatinho — alterações somente de aparência */
+  :root{--bg:#f8eee5;--panel:#fff7f2;--panel2:#f7e4e2;--text:#50372d;--muted:#987e73;--accent:#e98291;--red:#d96b78;--green:#77ad91}
+  html,body{background:var(--bg);color:var(--text)}
+  #join{background:radial-gradient(circle at 12% 18%,#fff9 0 7%,transparent 22%),linear-gradient(135deg,#f8eee5,#f6dfe0 55%,#f5e8d9)}
+  .card{background:#fff9f3ed;border:1px solid #edcfc8;border-radius:24px;box-shadow:0 16px 45px #9c6b5730;backdrop-filter:blur(8px)}
+  .card h1{color:#694638;letter-spacing:-.5px}
+  .card p{color:#987e73}
+  label.lbl{color:#98766c}
+  input[type=text],input[type=password],select{background:#fff;color:#573e34;border:1px solid #efd8d0;border-radius:12px}
+  input:focus,select:focus{outline-color:#e98291}
+  .primary{background:linear-gradient(135deg,#ee9aa5,#df7488);border-radius:14px;box-shadow:0 5px 14px #df748833}
+  #err{color:#c44f62}
+  header,#controls{background:#fff5ed;border-color:#efdcd2;box-shadow:0 2px 12px #916b5510}
+  header .room{color:#704b3b}
+  header .room::before{content:"🐾 ";}
+  #shareBar{background:#fce4e4;border-color:#e9a1a6;color:#8e4852}
+  .small{background:#f4e2df;color:#69483d;border-radius:10px}
+  .small:hover{background:#efd2d1}
+  .small.red,.btn2.red{background:#d96b78;color:white}
+  #grid{position:relative;isolation:isolate;background:linear-gradient(90deg,#f8eee5ee,#f8eee5a8),url('gato-tema.png') right center/auto 100% no-repeat,#f4e7dc}
+  #grid:before{content:"";position:fixed;inset:58px 0 78px 0;z-index:-1;pointer-events:none;background:url('gato-tema.png') right center/auto 100% no-repeat;opacity:.13;filter:saturate(.8)}
+  .tile{background:#eadbd3;border:2px solid #fff4ed;border-radius:18px;box-shadow:0 8px 22px #68473822}
+  .tile .avatar{background:linear-gradient(145deg,#f8e6e2,#f1d3d2)}
+  .tile .avatar span{background:linear-gradient(135deg,#e98291,#d96b78);box-shadow:0 5px 16px #b95e7033}
+  .tile .label{background:#fff1e9eF;color:#604438;border:1px solid #f0d5ca;border-radius:9px}
+  .tile.speaking{outline-color:#77ad91}
+  .tile .res,.tile .tools{background:#67483dcc;border-radius:9px}
+  .tools .vol{accent-color:#e98291}
+  .ctl{background:#f1dfdc;color:#704b40;box-shadow:0 4px 12px #8c645022}
+  .ctl:hover{background:#ead0d0}
+  .ctl.off,.ctl.leave{background:#d96b78;color:#fff}
+  .ctl.on{background:#77ad91;color:#fff}
+  #chat{background:#fff8f2;border-color:#efdcd2}
+  #msgs{background:linear-gradient(180deg,#fff8f2,#fbede7)}
+  .msg b{color:#c76579}
+  .msg.sys{color:#a18478}
+  #chatForm{border-color:#efdcd2}
+  dialog{background:#fff8f2;color:#50372d;border:1px solid #efd5cc;border-radius:20px;box-shadow:0 18px 55px #563a2c40}
+  dialog::backdrop{background:#51382d66;backdrop-filter:blur(3px)}
+  .opt{border-radius:12px}
+  .opt:hover{background:#f8e9e5}
+  .opt input{accent-color:#e98291}
+  .btn2{background:#f4e2df;color:#69483d;border-radius:10px}
+  .btn2.pri{background:#e98291;color:#fff}
+  .hint{color:#987e73}
+  #toast{background:#68483deF;color:#fff;border:1px solid #ffffff40;border-radius:12px}
+  @media(max-width:760px){
+    #grid{background-position:center;background-size:auto 70%;}
+    #grid:before{inset:58px 0 78px 0;background-position:center;background-size:auto 70%;opacity:.10}
+    #chat{background:#fff8f2;box-shadow:-8px 0 30px #6d4b3b33}
+  }
 </style>
 </head>
 <body>

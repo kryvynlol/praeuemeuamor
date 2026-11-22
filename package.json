@@ -1,0 +1,13 @@
+{
+  "name": "mini-discord",
+  "version": "1.0.0",
+  "description": "Sala de chamada simples (áudio, vídeo, tela e chat) pelo navegador",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "license": "MIT"
+}

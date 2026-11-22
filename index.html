@@ -12,7 +12,7 @@
   :root{--bg:#1e1f22;--panel:#2b2d31;--panel2:#313338;--text:#f2f3f5;--muted:#949ba4;--accent:#5865f2;--red:#da373c;--green:#23a559}
   *{box-sizing:border-box}
   html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-  button,input{font:inherit}
+  button,input,select{font:inherit}
   .hidden{display:none!important}
 
   /* Entrada */
@@ -20,9 +20,9 @@
   .card{background:var(--panel);padding:28px;border-radius:12px;width:100%;max-width:380px;box-shadow:0 8px 30px #0006}
   .card h1{margin:0 0 4px;font-size:22px}
   .card p{margin:0 0 18px;color:var(--muted);font-size:14px}
-  label{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin:12px 0 6px}
+  label.lbl{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin:12px 0 6px}
   input[type=text],input[type=password]{width:100%;padding:11px 12px;border-radius:6px;border:0;background:#1e1f22;color:var(--text);outline:2px solid transparent}
-  input:focus{outline-color:var(--accent)}
+  input:focus,select:focus{outline-color:var(--accent)}
   .primary{margin-top:18px;width:100%;padding:12px;border:0;border-radius:6px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
   .primary:hover{filter:brightness(1.1)}
   #err{color:#ff7b7f;font-size:14px;margin-top:10px;min-height:18px}
@@ -34,12 +34,17 @@
   header .room{font-weight:700}
   header .room::before{content:"🔊 ";}
   header .sp{flex:1}
+  #shareBar{display:flex;align-items:center;gap:8px;background:#da373c33;border:1px solid var(--red);padding:4px 6px 4px 10px;border-radius:8px;font-size:13px}
   .small{padding:6px 10px;border:0;border-radius:6px;background:var(--panel2);color:var(--text);cursor:pointer;font-size:13px}
   .small:hover{background:#3b3d44}
-  #grid{flex:1;display:grid;gap:10px;padding:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));grid-auto-rows:minmax(180px,1fr);overflow:auto;align-content:center}
-  .tile{position:relative;background:#111214;border-radius:10px;overflow:hidden;min-height:180px}
+  .small.red{background:var(--red)}
+
+  /* Grade de participantes */
+  #grid{flex:1;min-height:0;display:grid;gap:10px;padding:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));grid-auto-rows:minmax(180px,1fr);overflow:auto;align-content:center}
+  .tile{position:relative;background:#111214;border-radius:10px;overflow:hidden;min-height:180px;cursor:pointer}
   .tile video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
-  .tile.screen{grid-column:1/-1}
+  .tile[data-k="me"] video{transform:scaleX(-1)} /* espelha só a sua própria câmera */
+  .tile.screen{grid-column:1/-1;cursor:pointer}
   .tile.screen video{object-fit:contain}
   .tile .avatar{position:absolute;inset:0;display:none;place-items:center;background:var(--panel2)}
   .tile .avatar span{width:84px;height:84px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font-size:36px;font-weight:700}
@@ -48,9 +53,22 @@
   .tile .label{position:absolute;left:8px;bottom:8px;background:#000a;padding:3px 9px;border-radius:5px;font-size:13px;max-width:80%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tile.muted .label::after{content:" 🔇"}
   .tile.speaking{outline:3px solid var(--green);outline-offset:-3px}
-  .tile .full{position:absolute;right:8px;top:8px;background:#000a;border:0;color:#fff;border-radius:5px;padding:4px 8px;cursor:pointer;font-size:12px;opacity:0;transition:.15s}
-  .tile:hover .full{opacity:1}
-  @media(hover:none){.tile .full{opacity:1}}
+  .tile .res{position:absolute;left:8px;top:8px;background:#000a;padding:2px 8px;border-radius:5px;font-size:12px;display:none}
+  .tile.screen .res:not(:empty){display:block}
+  .tile .tools{position:absolute;right:8px;top:8px;display:flex;align-items:center;gap:6px;background:#000a;border-radius:6px;padding:3px 6px;opacity:0;transition:.15s}
+  .tile:hover .tools{opacity:1}
+  @media(hover:none){.tile .tools{opacity:1}}
+  .tools button{background:none;border:0;color:#fff;cursor:pointer;font-size:14px;padding:2px 4px}
+  .tools .vol{width:80px;accent-color:var(--accent)}
+
+  /* Modo foco: tela compartilhada (ou pessoa fixada) grande, resto em faixa embaixo */
+  #grid.stage{display:flex;flex-wrap:wrap;align-content:flex-start;gap:8px;overflow:hidden}
+  #grid.stage .tile{flex:0 0 200px;height:112px;min-height:0}
+  #grid.stage .tile .avatar span{width:44px;height:44px;font-size:20px}
+  #grid.stage .tile:not(.focused) .tools{display:none}
+  #grid.stage .tile.focused{order:-1;flex:0 0 100%;height:calc(100% - 122px);cursor:zoom-out}
+  #grid.stage .tile.focused .avatar span{width:96px;height:96px;font-size:42px}
+  #grid.stage .tile.focused.screen video{object-fit:contain}
 
   #controls{display:flex;justify-content:center;gap:10px;padding:12px;background:var(--panel);padding-bottom:max(12px,env(safe-area-inset-bottom))}
   .ctl{width:52px;height:52px;border-radius:50%;border:0;background:var(--panel2);color:#fff;font-size:22px;cursor:pointer;display:grid;place-items:center;transition:.15s}
@@ -70,7 +88,27 @@
   #chatForm input{flex:1}
   @media(max-width:760px){
     #chat{position:fixed;inset:0 0 0 auto;width:min(100%,360px);z-index:10;box-shadow:-8px 0 30px #0008}
+    #grid.stage .tile{flex-basis:130px;height:80px}
+    #grid.stage .tile.focused{height:calc(100% - 92px)}
+    #shareBar span{display:none}
   }
+
+  /* Janelas (compartilhar tela / configurações) */
+  dialog{background:var(--panel);color:var(--text);border:0;border-radius:12px;padding:22px;width:min(92vw,440px);box-shadow:0 8px 30px #000a}
+  dialog::backdrop{background:#000a}
+  dialog h2{margin:0 0 12px;font-size:18px}
+  select{width:100%;padding:10px;border-radius:6px;border:0;background:#1e1f22;color:var(--text);outline:2px solid transparent}
+  .opt{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:14px}
+  .opt:hover{background:var(--panel2)}
+  .opt input{margin-top:3px;accent-color:var(--accent)}
+  .opt small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  .row{display:flex;gap:8px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap}
+  .btn2{padding:9px 14px;border:0;border-radius:6px;background:var(--panel2);color:var(--text);cursor:pointer}
+  .btn2:hover{filter:brightness(1.15)}
+  .btn2.pri{background:var(--accent)}
+  .btn2.red{background:var(--red)}
+  .hint{font-size:12px;color:var(--muted);margin:10px 0 0}
+
   #toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#000d;padding:10px 16px;border-radius:8px;font-size:14px;z-index:50;opacity:0;pointer-events:none;transition:.2s;max-width:90%;text-align:center}
   #toast.show{opacity:1}
 </style>
@@ -81,12 +119,12 @@
   <form class="card" id="joinForm">
     <h1>Mini Discord</h1>
     <p>Entre na sala pra conversar por voz, vídeo e tela.</p>
-    <label for="name">Seu nome</label>
+    <label class="lbl" for="name">Seu nome</label>
     <input id="name" type="text" maxlength="30" placeholder="Ex.: Amor" required autocomplete="nickname">
-    <label for="room">Código da sala</label>
+    <label class="lbl" for="room">Código da sala</label>
     <input id="room" type="text" maxlength="40" value="nossa-sala" required>
     <div id="pwWrap" class="hidden">
-      <label for="pw">Senha</label>
+      <label class="lbl" for="pw">Senha</label>
       <input id="pw" type="password" autocomplete="current-password">
     </div>
     <button class="primary" type="submit">Entrar</button>
@@ -99,7 +137,8 @@
     <header>
       <span class="room" id="roomTitle"></span>
       <span class="sp"></span>
-      <button class="small" id="btnInvite">🔗 Copiar convite</button>
+      <div id="shareBar" class="hidden"><span>🔴 Você está compartilhando a tela</span><button class="small red" id="btnStopBar">Parar</button></div>
+      <button class="small" id="btnInvite">🔗 Convite</button>
       <button class="small" id="btnChat">💬 Chat</button>
     </header>
     <div id="grid"></div>
@@ -107,6 +146,7 @@
       <button class="ctl" id="btnMic" title="Microfone">🎤</button>
       <button class="ctl off" id="btnCam" title="Câmera">📷</button>
       <button class="ctl" id="btnScreen" title="Compartilhar tela">🖥️</button>
+      <button class="ctl" id="btnSettings" title="Configurações de áudio e vídeo">⚙️</button>
       <button class="ctl leave" id="btnLeave" title="Sair">📞</button>
     </div>
   </div>
@@ -119,6 +159,35 @@
   </aside>
 </div>
 
+<dialog id="shareDlg">
+  <h2>🖥️ Compartilhar tela</h2>
+  <div id="presets"></div>
+  <label class="opt"><input type="checkbox" id="chkAudio"><span>Compartilhar o som do computador<small>No Chrome/Edge, marque "Compartilhar áudio" na janela que abrir (funciona ao escolher a tela inteira ou uma aba).</small></span></label>
+  <p class="hint">Qualidade maior usa mais internet de envio (upload). Você pode mudar durante a transmissão.</p>
+  <div class="row">
+    <button class="btn2 red hidden" id="btnStopShare">Parar</button>
+    <button class="btn2" id="btnShareCancel">Cancelar</button>
+    <button class="btn2 pri" id="btnShareGo">Compartilhar</button>
+  </div>
+</dialog>
+
+<dialog id="settingsDlg">
+  <h2>⚙️ Áudio e vídeo</h2>
+  <label class="lbl" for="selCam">Câmera</label>
+  <select id="selCam"></select>
+  <label class="lbl" for="selCamQ">Qualidade da câmera</label>
+  <select id="selCamQ">
+    <option value="480">Leve · 480p</option>
+    <option value="720">Boa · 720p (recomendado)</option>
+    <option value="1080">Alta · 1080p (usa mais internet)</option>
+  </select>
+  <label class="lbl" for="selMic">Microfone</label>
+  <select id="selMic"></select>
+  <label class="opt"><input type="checkbox" id="chkNs"><span>Reduzir ruído de fundo</span></label>
+  <label class="opt"><input type="checkbox" id="chkEc"><span>Cancelar eco<small>Desligue se usar fones de ouvido e quiser o som mais natural.</small></span></label>
+  <div class="row"><button class="btn2 pri" id="btnSettingsClose">Fechar</button></div>
+</dialog>
+
 <div id="toast"></div>
 
 <script>
@@ -130,6 +199,54 @@ const peers = new Map();
 const localStream = new MediaStream();
 let micTrack = null, camTrack = null, screenStream = null, micOn = true;
 let audioCtx = null;
+let pinned = null, autoFocusOff = false;
+
+/* ---------- qualidade ---------- */
+const CAM_PRESETS = {
+  '480':  { w: 854,  h: 480,  fps: 30, br: 1000000 },
+  '720':  { w: 1280, h: 720,  fps: 30, br: 2500000 },
+  '1080': { w: 1920, h: 1080, fps: 30, br: 4500000 },
+};
+const SCREEN_PRESETS = {
+  '720p30':  { w: 1280, h: 720,  fps: 30, br: 2500000, hint: 'motion', title: 'Leve · 720p, 30 fps', desc: 'Para internet mais lenta.' },
+  '1080p30': { w: 1920, h: 1080, fps: 30, br: 5000000, hint: 'detail', title: 'Padrão · 1080p, 30 fps', desc: 'Bom para quase tudo (≈5 Mbps de upload).' },
+  'texto':   { w: 1920, h: 1080, fps: 15, br: 3000000, hint: 'detail', title: 'Texto e slides · 1080p, 15 fps', desc: 'Letras mais nítidas, com menos movimento.' },
+  '1080p60': { w: 1920, h: 1080, fps: 60, br: 8000000, hint: 'motion', title: 'Jogos e vídeos · 1080p, 60 fps', desc: 'Mais fluido; usa bastante internet (≈8 Mbps de upload).' },
+};
+let cfg = { cam: '720', screen: '1080p30', screenAudio: true, camId: '', micId: '', ns: true, ec: true };
+try { Object.assign(cfg, JSON.parse(localStorage.getItem('md_cfg') || '{}')); } catch {}
+if (!CAM_PRESETS[cfg.cam]) cfg.cam = '720';
+if (!SCREEN_PRESETS[cfg.screen]) cfg.screen = '1080p30';
+const saveCfg = () => { try { localStorage.setItem('md_cfg', JSON.stringify(cfg)); } catch {} };
+
+const camConstraints = () => {
+  const c = CAM_PRESETS[cfg.cam];
+  return { video: { ...(cfg.camId ? { deviceId: { ideal: cfg.camId } } : {}), width: { ideal: c.w }, height: { ideal: c.h }, frameRate: { ideal: c.fps } } };
+};
+const micConstraints = () => ({
+  audio: { ...(cfg.micId ? { deviceId: { ideal: cfg.micId } } : {}), echoCancellation: cfg.ec, noiseSuppression: cfg.ns, autoGainControl: true, channelCount: 1 },
+});
+
+// Ajusta bitrate / fps / prioridade de cada envio
+function tune(sender, { br, fps, hint }) {
+  try {
+    if (!sender || !sender.track) return;
+    const p = sender.getParameters();
+    if (!p.encodings || !p.encodings.length) return; // ainda não negociado; reaplicamos depois
+    if (br) p.encodings[0].maxBitrate = br;
+    if (fps) p.encodings[0].maxFramerate = fps;
+    if (hint === 'detail') p.degradationPreference = 'maintain-resolution';
+    else if (hint === 'motion') p.degradationPreference = 'maintain-framerate';
+    sender.setParameters(p).catch(() => {});
+  } catch {}
+}
+function tunePeer(p) {
+  const c = CAM_PRESETS[cfg.cam];
+  if (p.senders.cam) tune(p.senders.cam, { br: c.br, fps: c.fps, hint: 'motion' });
+  if (p.senders.mic) tune(p.senders.mic, { br: 64000 });
+  const sp = SCREEN_PRESETS[cfg.screen];
+  (p.senders.screen || []).forEach((s) => { if (s.track && s.track.kind === 'video') tune(s, { br: sp.br, fps: sp.fps, hint: sp.hint }); });
+}
 
 /* ---------- utilidades ---------- */
 function toast(t, ms = 3500) {
@@ -138,7 +255,6 @@ function toast(t, ms = 3500) {
 }
 let sendQ = Promise.resolve();
 function sendEvt(event, data, to) {
-  // fila sequencial para manter a ordem das mensagens
   sendQ = sendQ.then(() => fetch('/send', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ room, id: me.id, to, event, data }),
@@ -149,21 +265,50 @@ const sig = (to, data) => sendEvt('signal', data, to);
 const myState = () => ({ mic: !!micTrack && micOn, cam: !!camTrack, screen: screenStream ? screenStream.id : null });
 const sendState = (to) => sendEvt('state', myState(), to);
 
-/* ---------- tiles ---------- */
-function ensureTile(key, label, cls = '') {
+/* ---------- tiles e layout ---------- */
+function updateLayout() {
+  const grid = $('#grid');
+  const tiles = [...grid.querySelectorAll('.tile')];
+  const keys = tiles.map((t) => t.dataset.k);
+  if (pinned && !keys.includes(pinned)) pinned = null;
+  let focus = pinned;
+  if (!focus && !autoFocusOff) focus = keys.find((k) => k.startsWith('s:') && k !== 's:me') || null;
+  tiles.forEach((t) => t.classList.toggle('focused', t.dataset.k === focus));
+  grid.classList.toggle('stage', !!focus);
+}
+function onTileClick(key) {
+  const focused = document.querySelector(`[data-k="${key}"]`).classList.contains('focused');
+  if (focused) { pinned = null; autoFocusOff = true; } else { pinned = key; }
+  updateLayout();
+}
+
+function ensureTile(key, label, cls = '', remote = false) {
   let t = document.querySelector(`[data-k="${key}"]`);
   if (!t) {
     t = document.createElement('div');
     t.className = 'tile ' + cls; t.dataset.k = key;
-    t.innerHTML = '<video autoplay playsinline></video><div class="avatar"><span></span></div><div class="label"></div><button class="full" title="Tela cheia">⛶</button>';
-    t.querySelector('.full').onclick = () => (t.requestFullscreen || t.webkitRequestFullscreen || (() => {})).call(t);
+    t.innerHTML = '<video autoplay playsinline></video><div class="avatar"><span></span></div><div class="res"></div><div class="label"></div>' +
+      '<div class="tools"><input class="vol" type="range" min="0" max="100" value="100" title="Volume"><button class="full" title="Tela cheia">⛶</button></div>';
+    const v = t.querySelector('video'), res = t.querySelector('.res'), vol = t.querySelector('.vol');
+    const showRes = () => { res.textContent = v.videoWidth ? v.videoWidth + '×' + v.videoHeight : ''; };
+    v.addEventListener('loadedmetadata', showRes); v.addEventListener('resize', showRes);
+    if (remote) vol.oninput = () => { v.volume = vol.value / 100; }; else vol.remove();
+    const full = () => (t.requestFullscreen || t.webkitRequestFullscreen || (() => {})).call(t);
+    t.querySelector('.full').onclick = full;
+    t.addEventListener('dblclick', full);
+    t.addEventListener('click', (e) => { if (e.target.closest('button,input')) return; onTileClick(key); });
+    if (key.startsWith('s:') && key !== 's:me') autoFocusOff = false; // nova tela de alguém: volta a destacar
     $('#grid').appendChild(t);
+    updateLayout();
   }
   t.querySelector('.label').textContent = label;
   t.querySelector('.avatar span').textContent = (label.trim()[0] || '?').toUpperCase();
   return t;
 }
-function removeTile(key) { const t = document.querySelector(`[data-k="${key}"]`); if (t) t.remove(); }
+function removeTile(key) {
+  const t = document.querySelector(`[data-k="${key}"]`);
+  if (t) { t.remove(); updateLayout(); }
+}
 
 function renderSelf() {
   const t = ensureTile('me', me.name + ' (você)');
@@ -179,7 +324,7 @@ function renderSelf() {
 }
 
 function renderPeer(p) {
-  const t = ensureTile('p:' + p.id, p.name);
+  const t = ensureTile('p:' + p.id, p.name, '', true);
   const v = t.querySelector('video');
   let main = null, screen = null;
   for (const s of p.streams.values()) { if (s.id === p.state.screen) screen = s; else main = s; }
@@ -188,7 +333,7 @@ function renderPeer(p) {
   t.classList.toggle('muted', p.state.mic === false);
   if (main) watchSpeaking(main, t);
   if (screen) {
-    const s = ensureTile('s:' + p.id, p.name + ' — tela', 'screen');
+    const s = ensureTile('s:' + p.id, p.name + ' — tela', 'screen', true);
     const sv = s.querySelector('video');
     if (sv.srcObject !== screen) sv.srcObject = screen;
   } else removeTile('s:' + p.id);
@@ -207,7 +352,7 @@ function watchSpeaking(stream, tile) {
       if (!tile.isConnected) return;
       an.getByteFrequencyData(buf);
       const avg = buf.reduce((a, b) => a + b, 0) / buf.length;
-      tile.classList.toggle('speaking', avg > 18 && tile.dataset.k !== 'x');
+      tile.classList.toggle('speaking', avg > 18);
       requestAnimationFrame(tick);
     };
     tick();
@@ -233,6 +378,7 @@ function createPeer(id, name) {
     try { p.making = true; await pc.setLocalDescription(); sig(id, { description: pc.localDescription }); }
     catch (e) { console.error(e); } finally { p.making = false; }
   };
+  pc.addEventListener('signalingstatechange', () => { if (pc.signalingState === 'stable') tunePeer(p); });
   pc.ontrack = ({ streams }) => {
     const s = streams[0]; if (!s) return;
     if (!p.streams.has(s.id)) {
@@ -305,27 +451,40 @@ function updateButtons() {
   $('#btnMic').textContent = micTrack && micOn ? '🎤' : '🔇';
   $('#btnCam').classList.toggle('off', !camTrack);
   $('#btnScreen').classList.toggle('on', !!screenStream);
+  $('#shareBar').classList.toggle('hidden', !screenStream);
   renderSelf();
 }
 
 async function toggleMic() {
   if (!micTrack) {
     try {
-      const ms = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      const ms = await navigator.mediaDevices.getUserMedia(micConstraints());
       micTrack = ms.getAudioTracks()[0]; micOn = true; localStream.addTrack(micTrack);
-      peers.forEach((p) => { p.senders.mic = p.pc.addTrack(micTrack, localStream); });
+      peers.forEach((p) => { p.senders.mic = p.pc.addTrack(micTrack, localStream); tunePeer(p); });
     } catch { return toast('Não consegui acessar o microfone. Verifique a permissão do navegador.'); }
   } else { micOn = !micOn; micTrack.enabled = micOn; }
   updateButtons(); sendState();
 }
 
+async function restartMic() {
+  if (!micTrack) return;
+  try {
+    const ms = await navigator.mediaDevices.getUserMedia(micConstraints());
+    const nt = ms.getAudioTracks()[0]; nt.enabled = micOn;
+    const old = micTrack;
+    localStream.removeTrack(old); localStream.addTrack(nt); micTrack = nt;
+    for (const p of peers.values()) if (p.senders.mic) await p.senders.mic.replaceTrack(nt);
+    old.stop(); peers.forEach(tunePeer);
+  } catch { toast('Não consegui trocar o microfone.'); }
+}
+
 async function toggleCam() {
   if (!camTrack) {
     try {
-      const ms = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } } });
-      camTrack = ms.getVideoTracks()[0]; localStream.addTrack(camTrack);
+      const ms = await navigator.mediaDevices.getUserMedia(camConstraints());
+      camTrack = ms.getVideoTracks()[0]; camTrack.contentHint = 'motion'; localStream.addTrack(camTrack);
       updateButtons(); await sendState();
-      peers.forEach((p) => { p.senders.cam = p.pc.addTrack(camTrack, localStream); });
+      peers.forEach((p) => { p.senders.cam = p.pc.addTrack(camTrack, localStream); tunePeer(p); });
     } catch { return toast('Não consegui acessar a câmera. Verifique a permissão do navegador.'); }
   } else {
     camTrack.stop(); localStream.removeTrack(camTrack);
@@ -335,21 +494,94 @@ async function toggleCam() {
   renderSelf();
 }
 
-async function toggleScreen() {
-  if (screenStream) return stopScreen();
+async function restartCam() {
+  if (!camTrack) return;
   try {
-    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 30 } }, audio: true });
+    const ms = await navigator.mediaDevices.getUserMedia(camConstraints());
+    const nt = ms.getVideoTracks()[0]; nt.contentHint = 'motion';
+    const old = camTrack;
+    localStream.removeTrack(old); localStream.addTrack(nt); camTrack = nt;
+    for (const p of peers.values()) if (p.senders.cam) await p.senders.cam.replaceTrack(nt);
+    old.stop(); peers.forEach(tunePeer); renderSelf();
+  } catch { toast('Não consegui trocar a câmera.'); }
+}
+
+async function applyCamQuality() {
+  if (!camTrack) return;
+  const c = CAM_PRESETS[cfg.cam];
+  try { await camTrack.applyConstraints({ width: { ideal: c.w }, height: { ideal: c.h }, frameRate: { ideal: c.fps } }); } catch {}
+  peers.forEach(tunePeer);
+}
+
+/* ---------- compartilhar tela ---------- */
+function renderPresets() {
+  const box = $('#presets'); box.innerHTML = '';
+  for (const [k, v] of Object.entries(SCREEN_PRESETS)) {
+    const l = document.createElement('label'); l.className = 'opt';
+    l.innerHTML = '<input type="radio" name="preset"><span></span>';
+    const i = l.querySelector('input'); i.value = k; i.checked = k === cfg.screen;
+    l.querySelector('span').innerHTML = v.title + '<small>' + v.desc + '</small>';
+    box.appendChild(l);
+  }
+}
+function openShare() {
+  renderPresets();
+  $('#chkAudio').checked = cfg.screenAudio;
+  $('#chkAudio').disabled = !!screenStream;
+  $('#btnStopShare').classList.toggle('hidden', !screenStream);
+  $('#btnShareGo').textContent = screenStream ? 'Aplicar qualidade' : 'Compartilhar';
+  $('#shareDlg').showModal();
+}
+async function startScreen() {
+  const sp = SCREEN_PRESETS[cfg.screen];
+  try {
+    screenStream = await navigator.mediaDevices.getDisplayMedia({
+      video: { width: { ideal: sp.w }, height: { ideal: sp.h }, frameRate: { ideal: sp.fps, max: 60 } },
+      audio: cfg.screenAudio ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : false,
+      systemAudio: 'include', surfaceSwitching: 'include', selfBrowserSurface: 'exclude',
+    });
   } catch { return; }
   const v = screenStream.getVideoTracks()[0];
-  if (v) { v.contentHint = 'detail'; v.onended = stopScreen; }
+  if (v) { v.contentHint = sp.hint; v.onended = stopScreen; }
   updateButtons(); await sendState();
-  peers.forEach((p) => { p.senders.screen = screenStream.getTracks().map((tr) => p.pc.addTrack(tr, screenStream)); });
+  peers.forEach((p) => { p.senders.screen = screenStream.getTracks().map((tr) => p.pc.addTrack(tr, screenStream)); tunePeer(p); });
+}
+async function applyScreenPreset() {
+  if (!screenStream) return;
+  const sp = SCREEN_PRESETS[cfg.screen];
+  const v = screenStream.getVideoTracks()[0];
+  if (v) {
+    v.contentHint = sp.hint;
+    try { await v.applyConstraints({ width: { ideal: sp.w }, height: { ideal: sp.h }, frameRate: { ideal: sp.fps } }); } catch {}
+  }
+  peers.forEach(tunePeer);
+  toast('Qualidade da tela: ' + sp.title);
 }
 function stopScreen() {
   if (!screenStream) return;
   screenStream.getTracks().forEach((t) => t.stop());
   peers.forEach((p) => { (p.senders.screen || []).forEach((s) => { try { p.pc.removeTrack(s); } catch {} }); p.senders.screen = null; });
   screenStream = null; updateButtons(); sendState();
+}
+
+/* ---------- configurações ---------- */
+function fillSelect(sel, list, current, defaultLabel) {
+  sel.innerHTML = '';
+  const d = document.createElement('option'); d.value = ''; d.textContent = defaultLabel; sel.appendChild(d);
+  list.forEach((dev, i) => {
+    const o = document.createElement('option'); o.value = dev.deviceId; o.textContent = dev.label || ('Dispositivo ' + (i + 1)); sel.appendChild(o);
+  });
+  sel.value = [...sel.options].some((o) => o.value === current) ? current : '';
+}
+async function openSettings() {
+  try {
+    const ds = await navigator.mediaDevices.enumerateDevices();
+    fillSelect($('#selCam'), ds.filter((d) => d.kind === 'videoinput'), cfg.camId, 'Padrão do sistema');
+    fillSelect($('#selMic'), ds.filter((d) => d.kind === 'audioinput'), cfg.micId, 'Padrão do sistema');
+  } catch {}
+  $('#selCamQ').value = cfg.cam;
+  $('#chkNs').checked = cfg.ns; $('#chkEc').checked = cfg.ec;
+  $('#settingsDlg').showModal();
 }
 
 function leave() {
@@ -389,7 +621,7 @@ async function join(ev) {
   if (!navigator.mediaDevices.getDisplayMedia) $('#btnScreen').classList.add('hidden');
 
   try {
-    const ms = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    const ms = await navigator.mediaDevices.getUserMedia(micConstraints());
     micTrack = ms.getAudioTracks()[0]; localStream.addTrack(micTrack);
   } catch { toast('Sem acesso ao microfone — você entrou só ouvindo. Clique em 🎤 para tentar de novo.', 6000); }
   updateButtons(); connect();
@@ -401,13 +633,35 @@ async function join(ev) {
   const urlRoom = new URLSearchParams(location.search).get('room');
   $('#room').value = urlRoom || localStorage.getItem('md_room') || 'nossa-sala';
   $('#joinForm').addEventListener('submit', join);
+
   $('#btnMic').onclick = toggleMic; $('#btnCam').onclick = toggleCam;
-  $('#btnScreen').onclick = toggleScreen; $('#btnLeave').onclick = leave;
+  $('#btnScreen').onclick = openShare; $('#btnSettings').onclick = openSettings;
+  $('#btnLeave').onclick = leave; $('#btnStopBar').onclick = stopScreen;
   $('#btnChat').onclick = () => $('#chat').classList.toggle('hidden');
   $('#btnInvite').onclick = async () => {
     const link = location.origin + '/?room=' + encodeURIComponent(room);
     try { await navigator.clipboard.writeText(link); toast('Link copiado!'); } catch { prompt('Copie o link:', link); }
   };
+
+  // janela de compartilhar tela
+  $('#btnShareCancel').onclick = () => $('#shareDlg').close();
+  $('#btnStopShare').onclick = () => { $('#shareDlg').close(); stopScreen(); };
+  $('#btnShareGo').onclick = () => {
+    const sel = document.querySelector('input[name=preset]:checked');
+    if (sel) cfg.screen = sel.value;
+    cfg.screenAudio = $('#chkAudio').checked; saveCfg();
+    $('#shareDlg').close();
+    if (screenStream) applyScreenPreset(); else startScreen();
+  };
+
+  // janela de configurações
+  $('#btnSettingsClose').onclick = () => $('#settingsDlg').close();
+  $('#selCam').onchange = (e) => { cfg.camId = e.target.value; saveCfg(); restartCam(); };
+  $('#selMic').onchange = (e) => { cfg.micId = e.target.value; saveCfg(); restartMic(); };
+  $('#selCamQ').onchange = (e) => { cfg.cam = e.target.value; saveCfg(); applyCamQuality(); };
+  $('#chkNs').onchange = (e) => { cfg.ns = e.target.checked; saveCfg(); restartMic(); };
+  $('#chkEc').onchange = (e) => { cfg.ec = e.target.checked; saveCfg(); restartMic(); };
+
   $('#chatForm').addEventListener('submit', (e) => {
     e.preventDefault(); const t = $('#chatInput').value.trim(); if (!t) return;
     addMsg('Você', t); sendEvt('chat', { text: t }); $('#chatInput').value = '';

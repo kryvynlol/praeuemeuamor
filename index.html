@@ -163,7 +163,7 @@
   <h2>🖥️ Compartilhar tela</h2>
   <div id="presets"></div>
   <label class="opt"><input type="checkbox" id="chkAudio"><span>Compartilhar o som do computador<small>No Chrome/Edge, marque "Compartilhar áudio" na janela que abrir (funciona ao escolher a tela inteira ou uma aba).</small></span></label>
-  <p class="hint">Qualidade maior usa mais internet de envio (upload). Você pode mudar durante a transmissão.</p>
+  <p class="hint">Qualidade maior usa mais internet de envio (upload). Você pode mudar durante a transmissão. Para áudio do sistema, Chrome/Edge geralmente funcionam melhor; escolha uma aba ou a tela inteira e marque a opção de áudio na janela do navegador.</p>
   <div class="row">
     <button class="btn2 red hidden" id="btnStopShare">Parar</button>
     <button class="btn2" id="btnShareCancel">Cancelar</button>
@@ -369,14 +369,20 @@ function addLocalTracks(p) {
 function createPeer(id, name) {
   if (peers.has(id)) return peers.get(id);
   const pc = new RTCPeerConnection({ iceServers: ICE });
-  const p = { id, name, pc, polite: me.id > id, making: false, ignore: false, senders: {}, streams: new Map(), state: { mic: true, cam: false, screen: null } };
+  const p = { id, name, pc, polite: me.id > id, making: false, ignore: false, isSettingRemoteAnswerPending: false, pendingCandidates: [], senders: {}, streams: new Map(), state: { mic: true, cam: false, screen: null } };
   peers.set(id, p);
 
   pc.createDataChannel('hb', { negotiated: true, id: 0 }); // garante a negociação mesmo sem mídia
   pc.onicecandidate = ({ candidate }) => { if (candidate) sig(id, { candidate }); };
   pc.onnegotiationneeded = async () => {
-    try { p.making = true; await pc.setLocalDescription(); sig(id, { description: pc.localDescription }); }
-    catch (e) { console.error(e); } finally { p.making = false; }
+    try {
+      p.making = true;
+      await pc.setLocalDescription();
+      await sig(id, { description: pc.localDescription });
+    } catch (e) {
+      console.error('Falha ao negociar mídia:', e);
+      toast('Não foi possível atualizar a chamada com ' + p.name + '.');
+    } finally { p.making = false; }
   };
   pc.addEventListener('signalingstatechange', () => { if (pc.signalingState === 'stable') tunePeer(p); });
   pc.ontrack = ({ streams }) => {
@@ -389,8 +395,19 @@ function createPeer(id, name) {
   };
   pc.onconnectionstatechange = () => {
     if (pc.connectionState === 'failed') {
-      toast('Falha na conexão com ' + p.name + '. Pode ser necessário um servidor TURN (veja o README).', 7000);
-      pc.restartIce();
+      toast('Conexão com ' + p.name + ' caiu. Tentando reconectar…', 7000);
+      try { pc.restartIce(); } catch (e) { console.warn(e); }
+    } else if (pc.connectionState === 'connected') {
+      toast('Conexão de mídia com ' + p.name + ' restabelecida.');
+    }
+  };
+  pc.oniceconnectionstatechange = () => {
+    if (pc.iceConnectionState === 'disconnected') {
+      setTimeout(() => {
+        if (peers.get(id) === p && pc.iceConnectionState === 'disconnected') {
+          try { pc.restartIce(); } catch {}
+        }
+      }, 4000);
     }
   };
   renderPeer(p);
@@ -399,21 +416,48 @@ function createPeer(id, name) {
   return p;
 }
 
+async function flushCandidates(p) {
+  if (!p.pc.remoteDescription) return;
+  const queued = p.pendingCandidates.splice(0);
+  for (const candidate of queued) {
+    try { await p.pc.addIceCandidate(candidate); }
+    catch (e) { if (!p.ignore) console.warn('ICE candidate ignorado:', e); }
+  }
+}
+
 async function onSignal(from, name, data) {
   const p = peers.get(from) || createPeer(from, name || 'Visitante');
   const pc = p.pc;
   try {
     if (data.description) {
       const d = data.description;
-      const collision = d.type === 'offer' && (p.making || pc.signalingState !== 'stable');
+      const readyForOffer = !p.making &&
+        (pc.signalingState === 'stable' || p.isSettingRemoteAnswerPending);
+      const collision = d.type === 'offer' && !readyForOffer;
       p.ignore = !p.polite && collision;
       if (p.ignore) return;
+      if (collision && p.polite && pc.signalingState !== 'stable') {
+        await pc.setLocalDescription({ type: 'rollback' });
+      }
+      p.isSettingRemoteAnswerPending = d.type === 'answer';
       await pc.setRemoteDescription(d);
-      if (d.type === 'offer') { await pc.setLocalDescription(); sig(from, { description: pc.localDescription }); }
+      p.isSettingRemoteAnswerPending = false;
+      await flushCandidates(p);
+      if (d.type === 'offer') {
+        await pc.setLocalDescription();
+        await sig(from, { description: pc.localDescription });
+      }
     } else if (data.candidate) {
-      try { await pc.addIceCandidate(data.candidate); } catch (e) { if (!p.ignore) throw e; }
+      if (!pc.remoteDescription) p.pendingCandidates.push(data.candidate);
+      else {
+        try { await pc.addIceCandidate(data.candidate); }
+        catch (e) { if (!p.ignore) throw e; }
+      }
     }
-  } catch (e) { console.error(e); }
+  } catch (e) {
+    p.isSettingRemoteAnswerPending = false;
+    console.error('Erro na sinalização WebRTC:', e);
+  }
 }
 
 function closePeer(id) {
@@ -482,10 +526,20 @@ async function toggleCam() {
   if (!camTrack) {
     try {
       const ms = await navigator.mediaDevices.getUserMedia(camConstraints());
-      camTrack = ms.getVideoTracks()[0]; camTrack.contentHint = 'motion'; localStream.addTrack(camTrack);
+      camTrack = ms.getVideoTracks()[0];
+      if (!camTrack) { ms.getTracks().forEach(t => t.stop()); throw new Error('Nenhuma câmera foi encontrada.'); }
+      camTrack.contentHint = 'motion';
+      localStream.addTrack(camTrack);
       updateButtons(); await sendState();
       peers.forEach((p) => { p.senders.cam = p.pc.addTrack(camTrack, localStream); tunePeer(p); });
-    } catch { return toast('Não consegui acessar a câmera. Verifique a permissão do navegador.'); }
+    } catch (e) {
+      console.warn('Erro ao iniciar câmera:', e);
+      const msg = e.name === 'NotAllowedError' ? 'Permita o acesso à câmera nas configurações do navegador.' :
+        e.name === 'NotFoundError' ? 'Nenhuma câmera foi encontrada.' :
+        e.name === 'NotReadableError' ? 'A câmera já pode estar sendo usada por outro aplicativo.' :
+        (e.message || 'Verifique a permissão do navegador.');
+      return toast('Não consegui iniciar a câmera. ' + msg, 6000);
+    }
   } else {
     camTrack.stop(); localStream.removeTrack(camTrack);
     peers.forEach((p) => { if (p.senders.cam) { try { p.pc.removeTrack(p.senders.cam); } catch {} p.senders.cam = null; } });
@@ -533,19 +587,55 @@ function openShare() {
   $('#shareDlg').showModal();
 }
 async function startScreen() {
+  if (screenStream) return applyScreenPreset();
+  if (!navigator.mediaDevices?.getDisplayMedia) {
+    return toast('Seu navegador não oferece compartilhamento de tela. Tente Chrome, Edge ou Firefox no computador.');
+  }
   const sp = SCREEN_PRESETS[cfg.screen];
   try {
-    screenStream = await navigator.mediaDevices.getDisplayMedia({
-      video: { width: { ideal: sp.w }, height: { ideal: sp.h }, frameRate: { ideal: sp.fps, max: 60 } },
-      audio: cfg.screenAudio ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : false,
-      systemAudio: 'include', surfaceSwitching: 'include', selfBrowserSurface: 'exclude',
+    const captured = await navigator.mediaDevices.getDisplayMedia({
+      video: {
+        width: { ideal: sp.w }, height: { ideal: sp.h },
+        frameRate: { ideal: sp.fps, max: sp.fps }
+      },
+      audio: cfg.screenAudio ? {
+        echoCancellation: false, noiseSuppression: false, autoGainControl: false
+      } : false,
+      systemAudio: 'include',
+      surfaceSwitching: 'include',
+      selfBrowserSurface: 'exclude'
     });
-  } catch { return; }
-  const v = screenStream.getVideoTracks()[0];
-  if (v) { v.contentHint = sp.hint; v.onended = stopScreen; }
-  updateButtons(); await sendState();
-  peers.forEach((p) => { p.senders.screen = screenStream.getTracks().map((tr) => p.pc.addTrack(tr, screenStream)); tunePeer(p); });
+    screenStream = captured;
+    const v = screenStream.getVideoTracks()[0];
+    if (!v) {
+      screenStream.getTracks().forEach(t => t.stop());
+      screenStream = null;
+      return toast('O navegador não retornou uma imagem para compartilhar.');
+    }
+    v.contentHint = sp.hint;
+    v.onended = () => stopScreen();
+    v.onmute = () => toast('A captura da tela foi pausada pelo navegador.');
+    v.onunmute = () => toast('Compartilhamento de tela retomado.');
+    if (cfg.screenAudio && !screenStream.getAudioTracks().length) {
+      toast('Tela compartilhada. O navegador não disponibilizou o áudio do sistema; tente compartilhar uma aba e marcar “Compartilhar áudio”.', 6500);
+    }
+    updateButtons();
+    await sendState();
+    peers.forEach((p) => {
+      p.senders.screen = screenStream.getTracks().map((tr) => p.pc.addTrack(tr, screenStream));
+      tunePeer(p);
+    });
+    renderSelf();
+  } catch (e) {
+    screenStream = null;
+    updateButtons();
+    if (e.name === 'NotAllowedError') return toast('Compartilhamento cancelado ou sem permissão.');
+    if (e.name === 'NotReadableError') return toast('Não foi possível capturar essa tela/janela. Feche outras capturas e tente novamente.');
+    console.error('Erro ao compartilhar tela:', e);
+    toast('Não consegui iniciar o compartilhamento: ' + (e.message || 'erro desconhecido'));
+  }
 }
+
 async function applyScreenPreset() {
   if (!screenStream) return;
   const sp = SCREEN_PRESETS[cfg.screen];
@@ -559,9 +649,16 @@ async function applyScreenPreset() {
 }
 function stopScreen() {
   if (!screenStream) return;
-  screenStream.getTracks().forEach((t) => t.stop());
-  peers.forEach((p) => { (p.senders.screen || []).forEach((s) => { try { p.pc.removeTrack(s); } catch {} }); p.senders.screen = null; });
-  screenStream = null; updateButtons(); sendState();
+  const ending = screenStream;
+  screenStream = null;
+  ending.getTracks().forEach((t) => { t.onended = null; try { t.stop(); } catch {} });
+  peers.forEach((p) => {
+    (p.senders.screen || []).forEach((sender) => { try { p.pc.removeTrack(sender); } catch {} });
+    p.senders.screen = null;
+    tunePeer(p);
+  });
+  updateButtons();
+  sendState();
 }
 
 /* ---------- configurações ---------- */

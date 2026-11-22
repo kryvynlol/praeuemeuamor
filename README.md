@@ -44,9 +44,18 @@ Abra http://localhost:3000. Para ela entrar de fora usando seu PC, use um túnel
 | `MAX_PEERS` | Máximo de pessoas por sala (padrão 4) |
 | `TURN_URL`, `TURN_USER`, `TURN_PASS` | Servidor TURN, usado se a conexão direta falhar |
 
+## Câmera e compartilhamento de tela
+
+- A câmera oferece 480p, 720p e 1080p. A qualidade maior exige mais upload e processamento.
+- A tela oferece 720p/30, 1080p/30, modo para texto/slides e 1080p/60 para jogos.
+- Para transmitir o áudio do computador, use Chrome ou Edge no computador. Na janela nativa de compartilhamento, selecione uma aba ou a tela inteira e marque a opção de compartilhar áudio. Nem todos os sistemas permitem capturar o áudio de qualquer janela.
+- Se a transmissão ficar travando, reduza a qualidade da tela para 720p ou use o modo de texto para apresentações.
+- O navegador precisa estar em HTTPS (o Render fornece isso) e o usuário precisa autorizar câmera, microfone e captura de tela.
+- O compartilhamento de tela não é suportado de forma consistente em navegadores móveis.
+
 ## Se a chamada não conectar
 
-Na maioria das redes a conexão é direta (via STUN) e funciona. Em algumas (4G de certas operadoras, redes de empresa) é preciso um servidor TURN. Dá para pegar um gratuito em metered.ca e então definir `TURN_URL` (ex.: `turn:servidor:3478`), `TURN_USER` e `TURN_PASS` nas variáveis de ambiente do Render.
+O projeto usa STUN para tentar uma conexão direta. Algumas redes (4G de certas operadoras, Wi-Fi corporativo, CGNAT ou firewalls) exigem um servidor TURN para retransmitir a mídia. Configure `TURN_URL`, `TURN_USER` e `TURN_PASS` nas variáveis de ambiente do Render usando um provedor TURN confiável. Sem TURN, não é possível garantir que câmera e tela conectem em todas as redes.
 
 ## Observações
 
